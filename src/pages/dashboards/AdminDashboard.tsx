@@ -35,15 +35,22 @@ export default function AdminDashboard() {
   const [orphanReqs, setOrphanReqs] = useState<OrphanRequest[]>([]);
   const [tab, setTab] = useState<"priority" | "users" | "care" | "orphan">("priority");
   const [profileModal, setProfileModal] = useState<any | null>(null);
+  const [rejectedUsers, setRejectedUsers] = useState<any[]>([]);
 
 const load = () => {
+
   const waitingCare = getCareRequests().filter(r => r.status === "waiting");
   const waitingOrphan = getOrphanRequests().filter(r => r.status === "waiting");
 
+  const rejectedCare = getCareRequests().filter(r => r.status === "rejected");
+  const rejectedOrphan = getOrphanRequests().filter(r => r.status === "rejected");
+
   setPendingUsers([...waitingCare, ...waitingOrphan]);
+  setRejectedUsers([...rejectedCare, ...rejectedOrphan]);
 
   setCareReqs(getCareRequests().filter(r => r.status === "approved"));
   setOrphanReqs(getOrphanRequests().filter(r => r.status === "approved"));
+
 };
 
   useEffect(() => { load(); }, []);
@@ -224,6 +231,81 @@ Reject
                   </motion.div>
                 ))
               )}
+              {/* Rejected Users Section */}
+
+{rejectedUsers.length > 0 && (
+  <div className="mt-10 space-y-3">
+
+    <h2 className="text-lg font-bold font-display text-red-600">
+      Rejected Users
+    </h2>
+
+    {rejectedUsers.map((u:any) => (
+
+      <motion.div
+        key={u.id}
+        variants={item}
+        className="bg-card rounded-2xl border border-border p-5 shadow-card"
+      >
+
+        <div className="flex items-center justify-between">
+
+          <div>
+
+            <h3 className="font-bold text-card-foreground">
+              {u.elderName || u.name} {u.helpType ? `— ${u.helpType}` : ""}
+            </h3>
+
+            <p className="text-sm text-muted-foreground mt-1">
+              {u.description}
+            </p>
+
+            <p className="text-xs text-muted-foreground mt-2">
+              {u.location || "Location not provided"} · Status:
+              <span className="text-red-600 font-medium ml-1">
+                Rejected
+              </span>
+            </p>
+
+          </div>
+
+          <div className="flex gap-2">
+
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setProfileModal(u)}
+              className="gap-1"
+            >
+              <Info className="w-4 h-4"/>
+              Info
+            </Button>
+
+            <Button
+              size="sm"
+              variant="hero"
+              onClick={() => {
+                if (u.elderName) {
+                  updateCareRequest(u.id,{status:"approved"});
+                } else {
+                  updateOrphanRequest(u.id,{status:"approved"});
+                }
+                load();
+              }}
+            >
+              Accept
+            </Button>
+
+          </div>
+
+        </div>
+
+      </motion.div>
+
+    ))}
+
+  </div>
+)}
             </motion.div>
           )}
 
